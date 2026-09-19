@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>KOHLER Studio — AI Bathroom Planner</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1B1A17;
+    --porcelain:#EDEAE1;
+    --porcelain-2:#F7F5EF;
+    --brass:#A6793D;
+    --brass-light:#C89A5C;
+    --teal:#1F4B4C;
+    --line:#D8D2C3;
+    --muted:#6B655A;
+    --danger:#8C3A2B;
+    --radius:2px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--porcelain);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    line-height:1.5;
+  }
+  h1,h2,h3{font-family:'Fraunces',serif;font-weight:500;margin:0;}
+  .wrap{max-width:1320px;margin:0 auto;padding:36px 32px 80px;}
+
+  header.top{
+    display:flex;justify-content:space-between;align-items:flex-end;
+    border-bottom:1px solid var(--ink);
+    padding-bottom:22px;margin-bottom:36px;
+  }
+  .wordmark{font-family:'Fraunces',serif;font-size:15px;letter-spacing:0.14em;font-weight:600;}
+  header.top h1{font-size:40px;max-width:640px;margin-top:10px;}
+  header.top .sub{color:var(--muted);font-size:14px;max-width:320px;text-align:right;}
+
+  .layout{display:grid;grid-template-columns:340px 1fr;gap:40px;align-items:start;}
+  @media (max-width:920px){.layout{grid-template-columns:1fr;}}
+
+  .panel{background:var(--porcelain-2);border:1px solid var(--line);padding:26px;}
+  .panel h2{font-size:20px;margin-bottom:18px;}
+
+  .field{margin-bottom:20px;}
+  .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:7px;}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  input[type=number], input[type=text], input[type=password]{
+    width:100%;border:1px solid var(--line);background:#fff;padding:10px 11px;
+    font-family:'Inter',sans-serif;font-size:14px;color:var(--ink);
+  }
+  input:focus{outline:2px solid var(--brass);outline-offset:1px;}
+
+  .theme-grid{display:grid;grid-template-columns:1fr;gap:8px;}
+  .theme-opt{
+    border:1px solid var(--line);padding:12px 14px;cursor:pointer;
+    display:flex;justify-content:space-between;align-items:center;
+    background:#fff;font-size:14px;transition:border-color .15s;
+  }
+  .theme-opt.active{border-color:var(--brass);box-shadow:inset 0 0 0 1px var(--brass);}
+  .theme-opt small{display:block;color:var(--muted);font-size:11.5px;margin-top:2px;}
+
+  .budget-value{font-family:'Fraunces',serif;font-size:26px;margin-top:4px;}
+  input[type=range]{width:100%;accent-color:var(--brass);}
+
+  button.primary{
+    width:100%;background:var(--ink);color:var(--porcelain-2);border:none;
+    padding:14px;font-size:14px;letter-spacing:.03em;cursor:pointer;margin-top:6px;
+  }
+  button.primary:hover{background:var(--brass);color:var(--ink);}
+  button.secondary{
+    background:transparent;border:1px solid var(--ink);color:var(--ink);
+    padding:10px 14px;font-size:13px;cursor:pointer;
+  }
+  button.secondary:hover{background:var(--ink);color:#fff;}
+
+  .results-empty{
+    border:1px dashed var(--line);padding:60px 30px;text-align:center;color:var(--muted);
+  }
+
+  .section-title{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px;border-bottom:1px solid var(--line);padding-bottom:8px;}
+  .section-title h2{font-size:20px;}
+  .badge{font-size:11.5px;padding:3px 9px;border:1px solid currentColor;}
+  .badge.ok{color:var(--teal);}
+  .badge.warn{color:var(--danger);}
+
+  .stage{background:#fff;border:1px solid var(--line);padding:24px;margin-bottom:28px;}
+
+  .floorplan-wrap{display:flex;gap:24px;flex-wrap:wrap;}
+  svg.plan{background:var(--porcelain-2);border:1px solid var(--line);}
+  .legend{display:flex;flex-direction:column;gap:8px;font-size:13px;min-width:180px;}
+  .legend .item{display:flex;align-items:center;gap:8px;}
+  .swatch{width:12px;height:12px;display:inline-block;border:1px solid var(--ink);}
+
+  .bundle-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;margin-top:10px;}
+  .card{border:1px solid var(--line);padding:16px;background:var(--porcelain-2);}
+  .card .cat{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
+  .card h3{font-size:16px;margin:6px 0 4px;}
+  .card .price{font-family:'Fraunces',serif;font-size:18px;margin-top:8px;}
+  .card .tags{margin-top:8px;font-size:11.5px;color:var(--teal);}
+
+  .totals{display:flex;justify-content:space-between;align-items:center;margin-top:18px;padding-top:16px;border-top:1px solid var(--ink);}
+  .totals .big{font-family:'Fraunces',serif;font-size:28px;}
+  .totals .rem{font-size:13px;color:var(--muted);}
+  .over{color:var(--danger) !important;}
+
+  .stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+  @media (max-width:640px){.stats-grid{grid-template-columns:1fr;}}
+  .stat{border-left:2px solid var(--teal);padding-left:14px;}
+  .stat .num{font-family:'Fraunces',serif;font-size:26px;color:var(--teal);}
+  .stat .lbl{font-size:12.5px;color:var(--muted);margin-top:2px;}
+
+  .rationale-box{white-space:pre-wrap;font-size:14.5px;line-height:1.65;}
+  .rationale-actions{display:flex;gap:10px;margin-top:14px;}
+  .loading-dot::after{content:'…';animation:blink 1.2s infinite;}
+  @keyframes blink{0%,100%{opacity:.2}50%{opacity:1}}
+
+  .fine{font-size:11.5px;color:var(--muted);margin-top:6px;}
+  .scene3d-wrap{background:var(--porcelain-2);border:1px solid var(--line);}
+  .scene3d-wrap canvas{display:block;width:100%;}
+  .scene3d-hint{font-size:11.5px;color:var(--muted);margin-top:10px;}
+  .scene3d-fallback{padding:60px 20px;text-align:center;color:var(--muted);font-size:13px;}
+  footer.note{margin-top:60px;border-top:1px solid var(--line);padding-top:18px;font-size:12px;color:var(--muted);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div>
+      <div class="wordmark">KOHLER STUDIO</div>
+      <h1>Design your bathroom against real space and budget.</h1>
+    </div>
+    <div class="sub">An optimizer that reads your room, your budget and your style, then assembles a fixture bundle that actually fits.</div>
+  </header>
+
+  <div class="layout">
+
+    <!-- CONTROL PANEL -->
+    <div class="panel">
+      <h2>Your room</h2>
+
+      <div class="field">
+        <label>Room dimensions (feet)</label>
+        <div class="row2">
+          <input type="number" id="roomW" value="8" min="4" max="30" step="0.5">
+          <input type="number" id="roomL" value="10" min="4" max="30" step="0.5">
+        </div>
+        <div class="fine">Width × length. Ceiling height and door swing aren't modeled yet.</div>
+      </div>
+
+      <div class="field">
+        <label>Budget</label>
+        <input type="range" id="budget" min="1000" max="30000" step="250" value="8000">
+        <div class="budget-value" id="budgetLabel">$8,000</div>
+      </div>
+
+      <div class="field">
+        <label>Aesthetic theme</label>
+        <div class="theme-grid" id="themeGrid"></div>
+      </div>
+
+      <div class="field">
+        <label>Include a bathtub if space and budget allow</label>
+        <div class="theme-opt" id="tubToggle" style="justify-content:flex-start;gap:10px;">
+          <input type="checkbox" id="wantTub" checked style="width:auto;">
+          <span>Yes, try to include a tub</span>
+        </div>
+      </div>
+
+      <button class="primary" id="generateBtn">Generate bundle</button>
+    </div>
+
+    <!-- RESULTS -->
+    <div id="results">
+      <div class="results-empty">Set your room, budget and style, then generate a bundle.</div>
+    </div>
+
+  </div>
+
+  <footer class="note">
+    Prototype for the KOHLER AI Bathroom Designer &amp; Planner case study. Product catalog, pricing and specifications are illustrative placeholders modeled on real KOHLER product lines, not live SKU data.
+  </footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+/* =========================================================
+   1. CATALOG
+   ========================================================= */
+const CATALOG = {
+  toilet: [
+    {id:'t1', name:'Numi 2.0 Smart Toilet', price:9500, style:['Minimalist Modern','Contemporary'], footprint:{w:20,d:30}, gpf:0.8, premium:true, note:'Auto-open lid, integrated bidet, ambient lighting'},
+    {id:'t2', name:'Veil Intelligent Toilet', price:6200, style:['Minimalist Modern'], footprint:{w:18,d:28}, gpf:1.0, premium:true, note:'Skirted trapway, in-line bidet seat'},
+    {id:'t3', name:'San Souci One-Piece', price:650, style:['Classic Luxury'], footprint:{w:19,d:27}, gpf:1.28, premium:false, note:'Compact chair-height, traditional profile'},
+    {id:'t4', name:'Memoirs Classic', price:480, style:['Classic Luxury'], footprint:{w:18,d:28}, gpf:1.28, premium:false, note:'Furniture-inspired detailing'},
+    {id:'t5', name:'Avoir Comfort Height', price:520, style:['Japanese Zen','Minimalist Modern'], footprint:{w:16,d:26}, gpf:1.0, premium:false, note:'Quiet-close, unadorned form'},
+    {id:'t6', name:'Highline Classic', price:210, style:['Contemporary'], footprint:{w:18,d:27}, gpf:1.6, premium:false, note:'Reliable entry-level workhorse'},
+    {id:'t7', name:'Innate Sculpted Toilet — Oak Seat', price:1450, style:['Japanese Zen'], footprint:{w:17,d:27}, gpf:0.8, premium:true, note:'One-piece sculpted form, natural wood seat'},
+    {id:'t8', name:'Artifacts Hand-Finished Toilet', price:2100, style:['Classic Luxury'], footprint:{w:19,d:28}, gpf:1.0, premium:true, note:'Hand-finished detailing, heirloom-grade china'},
+  ],
+  faucet: [
+    {id:'f1', name:'Components Widespread — Brushed Gold', price:480, style:['Classic Luxury'], footprint:{w:1,d:1}, gpm:1.2, premium:true, note:'Cross handles, warm metal finish'},
+    {id:'f2', name:'Purist Single-Handle', price:310, style:['Minimalist Modern'], footprint:{w:1,d:1}, gpm:1.2, premium:false, note:'Slim wristlet handle, architectural line'},
+    {id:'f3', name:'Avid Single-Handle', price:140, style:['Contemporary'], footprint:{w:1,d:1}, gpm:1.2, premium:false, note:'Compact, easy-clean spout'},
+    {id:'f4', name:'Composed Matte Black', price:260, style:['Japanese Zen','Minimalist Modern'], footprint:{w:1,d:1}, gpm:1.0, premium:false, note:'Low-flow eco cartridge, matte black'},
+    {id:'f5', name:'Artifacts Bridge Faucet', price:520, style:['Classic Luxury'], footprint:{w:1,d:1}, gpm:1.5, premium:true, note:'Exposed bridge, vintage lever handles'},
+    {id:'f6', name:'Occasion Sculpted Faucet — Matte Black', price:610, style:['Japanese Zen'], footprint:{w:1,d:1}, gpm:0.8, premium:true, note:'Ultra-low-flow cartridge, sculpted minimal form'},
+    {id:'f7', name:'Statement Single-Handle — Brushed Nickel', price:420, style:['Minimalist Modern'], footprint:{w:1,d:1}, gpm:1.0, premium:true, note:'Architectural profile, precision-milled lever'},
+  ],
+  vanity: [
+    {id:'v1', name:'Jacquard 36" Vanity', price:2200, style:['Classic Luxury'], footprint:{w:36,d:21}, premium:true, note:'Furniture-style cabinetry, marble top'},
+    {id:'v2', name:'Poplin 30" Floating Vanity', price:1450, style:['Minimalist Modern'], footprint:{w:30,d:18}, premium:false, note:'Wall-mounted, integrated basin'},
+    {id:'v3', name:'Verdera 24" Wood Vanity', price:1600, style:['Japanese Zen'], footprint:{w:24,d:18}, premium:false, note:'Natural oak, low profile'},
+    {id:'v4', name:'Tresham 48" Double Vanity', price:2800, style:['Classic Luxury','Contemporary'], footprint:{w:48,d:22}, premium:true, note:'Two-basin, ample storage'},
+    {id:'v5', name:'Essential 24" Vanity', price:650, style:['Contemporary'], footprint:{w:24,d:18}, premium:false, note:'Budget-friendly single basin'},
+    {id:'v6', name:'Verdera 36" Floating Oak Vanity', price:3100, style:['Japanese Zen'], footprint:{w:36,d:19}, premium:true, note:'Book-matched oak, concealed hardware'},
+    {id:'v7', name:'Jute 36" Floating Vanity', price:2100, style:['Minimalist Modern'], footprint:{w:36,d:18}, premium:true, note:'Textured concrete top, hidden LED underglow'},
+  ],
+  shower: [
+    {id:'s1', name:'Anthem Thermostatic Trim', price:1350, style:['Minimalist Modern'], footprint:{w:36,d:36}, gpm:2.0, premium:true, note:'Digital temperature control, rain head'},
+    {id:'s2', name:'Purist Rain Shower', price:980, style:['Japanese Zen'], footprint:{w:36,d:36}, gpm:1.75, premium:false, note:'Wide rain head, natural stone-look base'},
+    {id:'s3', name:'Artifacts Cross-Handle System', price:1600, style:['Classic Luxury'], footprint:{w:36,d:42}, gpm:2.0, premium:true, note:'Traditional cross handles, telephone hand shower'},
+    {id:'s4', name:'Essential Shower Kit', price:340, style:['Contemporary'], footprint:{w:32,d:32}, gpm:2.5, premium:false, note:'Straightforward single-function kit'},
+    {id:'s5', name:'Purist Digital Rain System', price:2450, style:['Japanese Zen'], footprint:{w:40,d:40}, gpm:1.5, premium:true, note:'Multi-head digital thermostatic package'},
+  ],
+  tub: [
+    {id:'b1', name:'Underscore Freestanding Tub', price:2400, style:['Minimalist Modern','Japanese Zen'], footprint:{w:32,d:66}, premium:true, note:'Sculpted soaking tub, deep basin'},
+    {id:'b2', name:'Iron Works Clawfoot Tub', price:3200, style:['Classic Luxury'], footprint:{w:32,d:66}, premium:true, note:'Cast iron, traditional silhouette'},
+    {id:'b3', name:'Essential Alcove Tub', price:650, style:['Contemporary'], footprint:{w:30,d:60}, premium:false, note:'Standard alcove soaking tub'},
+  ],
+  mirror: [
+    {id:'m1', name:'Verdera LED Mirror', price:890, style:['Minimalist Modern'], footprint:{w:0,d:0}, premium:true, note:'Backlit, anti-fog, dimmable'},
+    {id:'m2', name:'Traditional Framed Mirror', price:340, style:['Classic Luxury'], footprint:{w:0,d:0}, premium:false, note:'Beveled edge, brass frame'},
+    {id:'m3', name:'Zen Wood-Frame Mirror', price:410, style:['Japanese Zen'], footprint:{w:0,d:0}, premium:false, note:'Reclaimed oak frame'},
+  ],
+};
+
+const THEMES = [
+  {id:'Minimalist Modern', label:'Minimalist Modern', desc:'Clean lines, quiet palette, engineered surfaces'},
+  {id:'Classic Luxury', label:'Classic Luxury', desc:'Furniture-grade cabinetry, warm metals, ornament'},
+  {id:'Japanese Zen', label:'Japanese Zen', desc:'Natural materials, low profiles, calm and spare'},
+];
+
+const BASELINE = { toiletGpf:1.6, faucetGpm:2.5, showerGpm:2.5 }; // pre-1994-style baseline for savings math
+
+/* =========================================================
+   2. STATE
+   ========================================================= */
+let state = { theme: THEMES[0].id };
+
+function renderThemes(){
+  const el = document.getElementById('themeGrid');
+  el.innerHTML = THEMES.map(t => `
+    <div class="theme-opt ${t.id===state.theme?'active':''}" data-theme="${t.id}">
+      <div><div>${t.label}</div><small>${t.desc}</small></div>
+    </div>`).join('');
+  el.querySelectorAll('.theme-opt').forEach(node=>{
+    node.addEventListener('click', ()=>{ state.theme = node.dataset.theme; renderThemes(); });
+  });
+}
+renderThemes();
+
+const budgetSlider = document.getElementById('budget');
+const budgetLabel = document.getElementById('budgetLabel');
+function fmtMoney(n){ return '$' + Math.round(n).toLocaleString('en-US'); }
+budgetSlider.addEventListener('input', ()=>{ budgetLabel.textContent = fmtMoney(budgetSlider.value); });
+
+/* =========================================================
+   3. OPTIMIZATION ENGINE
+   ========================================================= */
+function styleScore(item, theme){
+  if(item.style.includes(theme)) return 12;
+  if(item.style.includes('Contemporary')) return 4;
+  return 0;
+}
+function itemScore(item, theme){
+  let s = styleScore(item, theme);
+  if(item.premium) s += 3;
+  if(item.gpf!==undefined) s += (BASELINE.toiletGpf - item.gpf) * 4;
+  if(item.gpm!==undefined) s += (BASELINE.faucetGpm - item.gpm) * 2;
+  return s;
+}
+function footprintSqft(fp){ return (fp.w * fp.d) / 144; }
+
+// Multiple-choice knapsack over required categories, $10 resolution
+function pickBestCombo(categoryLists, budget){
+  const STEP = 10;
+  const B = Math.floor(budget / STEP);
+  const cats = Object.keys(categoryLists);
+  let dp = new Array(B+1).fill(-Infinity);
+  let choice = new Array(B+1).fill(null).map(()=>({}));
+  dp[0] = 0;
+  for(const cat of cats){
+    const items = categoryLists[cat];
+    const ndp = new Array(B+1).fill(-Infinity);
+    const nchoice = new Array(B+1).fill(null).map(()=>({}));
+    for(let b=0; b<=B; b++){
+      if(dp[b] === -Infinity) continue;
+      for(const it of items){
+        const cost = Math.ceil(it.price / STEP);
+        const nb = b + cost;
+        if(nb > B) continue;
+        const val = dp[b] + it._score;
+        if(val > ndp[nb]){
+          ndp[nb] = val;
+          nchoice[nb] = Object.assign({}, choice[b], {[cat]: it});
+        }
+      }
+    }
+    dp = ndp; choice = nchoice;
+  }
+  let bestB = -1, bestVal = -Infinity;
+  for(let b=0;b<=B;b++){ if(dp[b] > bestVal){ bestVal = dp[b]; bestB = b; } }
+  if(bestB === -1) return null;
+  return choice[bestB];
+}
+
+function buildBundle(){
+  const roomW = parseFloat(document.getElementById('roomW').value);
+  const roomL = parseFloat(document.getElementById('roomL').value);
+  const budget = parseFloat(budgetSlider.value);
+  const theme = state.theme;
+  const wantTub = document.getElementById('wantTub').checked;
+  const roomArea = roomW * roomL;
+  const usableArea = roomArea * 0.55; // reserve ~45% for clearances/circulation
+  const requiredCats = ['toilet','faucet','vanity','shower'];
+  const perCatCap = Math.max(usableArea / requiredCats.length, 6);
+
+  const notes = [];
+  const filtered = {};
+  requiredCats.forEach(cat=>{
+    let list = CATALOG[cat].map(it=>Object.assign({}, it, {_score: itemScore(it, theme)}));
+    let fitting = list.filter(it => footprintSqft(it.footprint) <= perCatCap);
+    if(fitting.length === 0){
+      fitting = [list.reduce((a,b)=> footprintSqft(a.footprint) < footprintSqft(b.footprint) ? a : b)];
+      notes.push(`Space is tight for the ${cat}; picked the smallest available option.`);
+    }
+    filtered[cat] = fitting;
+  });
+
+  const required = pickBestCombo(filtered, budget);
+  if(!required){
+    return { error: `No combination of required fixtures fits within ${fmtMoney(budget)}. Try raising the budget.` };
+  }
+
+  let spent = Object.values(required).reduce((a,it)=>a+it.price,0);
+  let usedArea = Object.values(required).reduce((a,it)=>a+footprintSqft(it.footprint),0);
+  const chosen = Object.assign({}, required);
+
+  // optional add-ons: tub, then mirror — greedy if remaining budget & floor area allow
+  if(wantTub){
+    const tubCandidates = CATALOG.tub
+      .map(it=>Object.assign({}, it, {_score: itemScore(it, theme)}))
+      .filter(it => it.price <= (budget - spent) && (usedArea + footprintSqft(it.footprint)) <= usableArea)
+      .sort((a,b)=> b._score - a._score);
+    if(tubCandidates.length){
+      chosen.tub = tubCandidates[0];
+      spent += tubCandidates[0].price;
+      usedArea += footprintSqft(tubCandidates[0].footprint);
+    } else {
+      notes.push('No bathtub fits the remaining budget and floor space — bundle stays shower-only.');
+    }
+  }
+  const mirrorCandidates = CATALOG.mirror
+    .map(it=>Object.assign({}, it, {_score: itemScore(it, theme)}))
+    .filter(it => it.price <= (budget - spent))
+    .sort((a,b)=> b._score - a._score);
+  if(mirrorCandidates.length) {
+    chosen.mirror = mirrorCandidates[0];
+    spent += mirrorCandidates[0].price;
+  }
+
+  const spaceFit = usedArea <= usableArea;
+
+  return { chosen, spent, budget, roomW, roomL, roomArea, usedArea, usableArea, spaceFit, notes, theme };
+}
+
+/* =========================================================
+   4. SUSTAINABILITY MATH
+   ========================================================= */
+function sustainabilityStats(chosen){
+  const occupants = 2, daysYear = 365;
+  const flushesPerPersonDay = 5, faucetMinPerDay = 4, showerMinPerDay = 8;
+  let gallonsBase = 0, gallonsNew = 0;
+
+  if(chosen.toilet){
+    gallonsBase += BASELINE.toiletGpf * flushesPerPersonDay * occupants * daysYear;
+    gallonsNew  += chosen.toilet.gpf  * flushesPerPersonDay * occupants * daysYear;
+  }
+  if(chosen.faucet){
+    gallonsBase += BASELINE.faucetGpm * faucetMinPerDay * occupants * daysYear;
+    gallonsNew  += chosen.faucet.gpm  * faucetMinPerDay * occupants * daysYear;
+  }
+  if(chosen.shower){
+    gallonsBase += BASELINE.showerGpm * showerMinPerDay * occupants * daysYear;
+    gallonsNew  += chosen.shower.gpm  * showerMinPerDay * occupants * daysYear;
+  }
+  const savedGallons = Math.max(0, gallonsBase - gallonsNew);
+  const savedPct = gallonsBase ? (savedGallons/gallonsBase*100) : 0;
+  return { savedGallons, savedPct };
+}
+
+/* =========================================================
+   5. SHARED LAYOUT (feet-based, used by both the 2D plan and the 3D scene)
+   ========================================================= */
+const FIXTURE_COLORS = { vanity:'#A6793D', toilet:'#F7F5EF', shower:'#1F4B4C', tub:'#F7F5EF' };
+const MARGIN_FT = 0.5;
+const toFeet = inches => inches / 12;
+
+// Heuristic wall-based placement: vanity along the back wall, toilet in the
+// opposite back corner, tub along the front-left wall, shower in the
+// remaining front-right corner. Returns feet-space rects keyed by category.
+function computeLayout(result){
+  const { roomW, roomL, chosen } = result;
+  const layout = {};
+
+  if(chosen.vanity){
+    const w = toFeet(chosen.vanity.footprint.w), d = toFeet(chosen.vanity.footprint.d);
+    layout.vanity = { x: MARGIN_FT, y: MARGIN_FT, w, d };
+  }
+  if(chosen.toilet){
+    const w = toFeet(chosen.toilet.footprint.w), d = toFeet(chosen.toilet.footprint.d);
+    layout.toilet = { x: roomW - MARGIN_FT - w, y: MARGIN_FT, w, d };
+  }
+  if(chosen.tub){
+    // tub is rotated so its long axis runs along the front wall
+    const alongWall = toFeet(chosen.tub.footprint.d), fromWall = toFeet(chosen.tub.footprint.w);
+    layout.tub = { x: MARGIN_FT, y: roomL - MARGIN_FT - fromWall, w: alongWall, d: fromWall };
+  }
+  if(chosen.shower){
+    const w = toFeet(chosen.shower.footprint.w), d = toFeet(chosen.shower.footprint.d);
+    layout.shower = { x: roomW - MARGIN_FT - w, y: roomL - MARGIN_FT - d, w, d };
+  }
+  return layout;
+}
+
+/* =========================================================
+   6. FLOOR PLAN SVG (top-down, uses computeLayout)
+   ========================================================= */
+function renderFloorplan(result){
+  const { roomW, roomL, chosen } = result;
+  const maxW = 460, maxH = 340, pad = 24;
+  const scale = Math.min((maxW-pad*2)/roomW, (maxH-pad*2)/roomL);
+  const rw = roomW*scale, rl = roomL*scale;
+  const ox = pad, oy = pad;
+  const layout = computeLayout(result);
+
+  let shapes = `<rect x="${ox}" y="${oy}" width="${rw}" height="${rl}" fill="#fff" stroke="#1B1A17" stroke-width="2"/>`;
+  let legend = '';
+
+  Object.entries(layout).forEach(([cat, r])=>{
+    const x = ox + r.x*scale, y = oy + r.y*scale, w = r.w*scale, d = r.d*scale;
+    shapes += `<rect x="${x}" y="${y}" width="${w}" height="${d}" fill="${FIXTURE_COLORS[cat]}" fill-opacity="0.75" stroke="#1B1A17" stroke-width="1"/>`;
+    shapes += `<text x="${x+w/2}" y="${y+d/2+4}" font-size="10" text-anchor="middle" fill="${cat==='vanity'?'#fff':'#1B1A17'}" font-family="Inter,sans-serif">${cat}</text>`;
+    legend += `<div class="item"><span class="swatch" style="background:${FIXTURE_COLORS[cat]}"></span>${chosen[cat].name}</div>`;
+  });
+
+  return {
+    svg: `<svg class="plan" width="${maxW}" height="${maxH}" viewBox="0 0 ${maxW} ${maxH}">${shapes}</svg>`,
+    legend
+  };
+}
+
+/* =========================================================
+   7. 3D VISUALIZATION (Three.js, uses the same computeLayout)
+   ========================================================= */
+let _three = null; // holds the live renderer/animation so we can tear it down on regenerate
+
+function disposeThree(){
+  if(!_three) return;
+  cancelAnimationFrame(_three.animId);
+  _three.renderer.dispose();
+  if(_three.renderer.domElement.parentNode) _three.renderer.domElement.parentNode.removeChild(_three.renderer.domElement);
+  _three = null;
+}
+
+// ---- materials (shared so the scene doesn't spin up dozens of duplicates) ----
+function makeMaterials(){
+  return {
+    porcelain: new THREE.MeshStandardMaterial({ color:0xF7F5EF, roughness:0.22, metalness:0.04 }),
+    counter:   new THREE.MeshStandardMaterial({ color:0xEFEBE0, roughness:0.15, metalness:0.05 }),
+    brass:     new THREE.MeshStandardMaterial({ color:0xB4913F, roughness:0.28, metalness:0.85 }),
+    cabinet:   new THREE.MeshStandardMaterial({ color:0xA6793D, roughness:0.55, metalness:0.05 }),
+    frameDark: new THREE.MeshStandardMaterial({ color:0x2B2A26, roughness:0.35, metalness:0.6 }),
+    glass:     new THREE.MeshStandardMaterial({ color:0xBFE0DD, roughness:0.08, metalness:0.1, transparent:true, opacity:0.25 }),
+    mirror:    new THREE.MeshStandardMaterial({ color:0xC9DAD8, roughness:0.05, metalness:0.7, transparent:true, opacity:0.65 }),
+    water:     new THREE.MeshStandardMaterial({ color:0xDCEEF0, roughness:0.1, transparent:true, opacity:0.8 }),
+  };
+}
+
+// ---- procedural tile texture, self-contained (no external image assets) ----
+function makeTileTexture(tileFt, lineColor, bgColor){
+  const c = document.createElement('canvas'); c.width = c.height = 256;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = bgColor; ctx.fillRect(0,0,256,256);
+  ctx.strokeStyle = lineColor; ctx.lineWidth = 3;
+  ctx.strokeRect(1,1,254,254);
+  const tex = new THREE.CanvasTexture(c);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.repeat.set(tileFt, tileFt);
+  return tex;
+}
+
+// ---- fixture builders: each returns a Group with its local origin at
+//      floor-level, footprint-center, authored at a "base" size in feet.
+//      render3D scales each group to the room's chosen footprint. ----
+
+function buildToilet(M){
+  const g = new THREE.Group();
+  const baseW = 1.5, baseD = 2.3;
+  const profile = [[0.02,0],[0.34,0],[0.37,0.05],[0.35,0.22],[0.30,0.48],
+    [0.33,0.56],[0.30,0.62],[0.18,0.62],[0.05,0.54],[0.02,0.48]]
+    .map(p=>new THREE.Vector2(p[0]*(baseW/0.75), p[1]));
+  const bowl = new THREE.Mesh(new THREE.LatheGeometry(profile, 24), M.porcelain);
+  bowl.position.z = baseD*0.22;
+  g.add(bowl);
+
+  const seat = new THREE.Mesh(new THREE.TorusGeometry(baseW*0.42, 0.05, 10, 28), M.porcelain);
+  seat.rotation.x = Math.PI/2;
+  seat.position.set(0, 0.63, baseD*0.22);
+  g.add(seat);
+
+  const tank = new THREE.Mesh(new THREE.BoxGeometry(baseW*0.72, 0.95, baseD*0.22), M.porcelain);
+  tank.position.set(0, 0.55, -baseD*0.36);
+  g.add(tank);
+  const lid = new THREE.Mesh(new THREE.BoxGeometry(baseW*0.78, 0.06, baseD*0.25), M.porcelain);
+  lid.position.set(0, 1.06, -baseD*0.36);
+  g.add(lid);
+
+  g.userData.base = { w: baseW, d: baseD };
+  return g;
+}
+
+function buildVanity(M, hasMirror){
+  const g = new THREE.Group();
+  const baseW = 2.5, baseD = 1.8, cabH = 2.3;
+
+  const cabinet = new THREE.Mesh(new THREE.BoxGeometry(baseW, cabH, baseD), M.cabinet);
+  cabinet.position.y = cabH/2;
+  g.add(cabinet);
+  const seams = new THREE.LineSegments(new THREE.EdgesGeometry(cabinet.geometry), new THREE.LineBasicMaterial({color:0x3B2D17}));
+  seams.position.copy(cabinet.position);
+  g.add(seams);
+
+  const top = new THREE.Mesh(new THREE.BoxGeometry(baseW+0.15, 0.12, baseD+0.15), M.counter);
+  top.position.y = cabH+0.06;
+  g.add(top);
+
+  const basinY = cabH+0.12;
+  const basinOuter = new THREE.Mesh(new THREE.CylinderGeometry(baseW*0.15, baseW*0.13, 0.2, 24), M.porcelain);
+  basinOuter.position.set(0, basinY+0.1, baseD*0.05);
+  g.add(basinOuter);
+  const basinInner = new THREE.Mesh(new THREE.CylinderGeometry(baseW*0.12, baseW*0.10, 0.09, 24), M.water);
+  basinInner.position.set(0, basinY+0.19, baseD*0.05);
+  g.add(basinInner);
+
+  const riser = new THREE.Mesh(new THREE.CylinderGeometry(0.025,0.025,0.45,12), M.brass);
+  riser.position.set(0, basinY+0.28, -baseD*0.22);
+  g.add(riser);
+  const spout = new THREE.Mesh(new THREE.TorusGeometry(0.14,0.022,8,16,Math.PI*0.65), M.brass);
+  spout.rotation.set(0, 0, Math.PI/2);
+  spout.position.set(0, basinY+0.48, -baseD*0.10);
+  g.add(spout);
+
+  const handle1 = new THREE.Mesh(new THREE.BoxGeometry(0.14,0.02,0.02), M.brass);
+  handle1.position.set(-baseW*0.22, cabH*0.55, baseD/2+0.02);
+  g.add(handle1);
+  const handle2 = handle1.clone(); handle2.position.x = baseW*0.22;
+  g.add(handle2);
+
+  g.userData.base = { w: baseW, d: baseD, topY: cabH+0.12 };
+  return g;
+}
+
+function buildTub(M){
+  const g = new THREE.Group();
+  const baseW = 5.5, baseD = 2.6, height = 1.4;
+  const rw = baseW/2, rd = baseD/2, rad = Math.min(0.3, rd*0.45);
+  const shape = new THREE.Shape();
+  shape.moveTo(-rw+rad,-rd); shape.lineTo(rw-rad,-rd);
+  shape.quadraticCurveTo(rw,-rd,rw,-rd+rad); shape.lineTo(rw,rd-rad);
+  shape.quadraticCurveTo(rw,rd,rw-rad,rd); shape.lineTo(-rw+rad,rd);
+  shape.quadraticCurveTo(-rw,rd,-rw,rd-rad); shape.lineTo(-rw,-rd+rad);
+  shape.quadraticCurveTo(-rw,-rd,-rw+rad,-rd);
+
+  const geo = new THREE.ExtrudeGeometry(shape, { depth:height, bevelEnabled:true, bevelThickness:0.07, bevelSize:0.07, bevelSegments:3, curveSegments:14 });
+  geo.rotateX(-Math.PI/2);
+  geo.computeBoundingBox();
+  const bb = geo.boundingBox;
+  geo.translate(-(bb.max.x+bb.min.x)/2, -bb.min.y, -(bb.max.z+bb.min.z)/2);
+  const tub = new THREE.Mesh(geo, M.porcelain);
+  g.add(tub);
+
+  const interior = new THREE.Mesh(new THREE.BoxGeometry(baseW*0.8, 0.06, baseD*0.55), M.water);
+  interior.position.y = height*0.82;
+  g.add(interior);
+
+  const riser = new THREE.Mesh(new THREE.CylinderGeometry(0.02,0.02,0.35,10), M.brass);
+  riser.position.set(-baseW*0.36, height+0.15, 0);
+  g.add(riser);
+  const spout = new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.02,0.22,10), M.brass);
+  spout.rotation.z = Math.PI/2.3;
+  spout.position.set(-baseW*0.30, height+0.32, 0);
+  g.add(spout);
+
+  g.userData.base = { w: baseW, d: baseD };
+  return g;
+}
+
+function buildShower(M){
+  const g = new THREE.Group();
+  const baseW = 3, baseD = 3, glassH = 6.6;
+
+  const pan = new THREE.Mesh(new THREE.BoxGeometry(baseW, 0.08, baseD), new THREE.MeshStandardMaterial({color:0xD8D2C3, roughness:0.6}));
+  pan.position.y = 0.04;
+  g.add(pan);
+  const drain = new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,0.02,16), M.frameDark);
+  drain.position.y = 0.09;
+  g.add(drain);
+
+  // glass panels on the two outward-facing sides (the corner's open sides face into the room)
+  const panelA = new THREE.Mesh(new THREE.BoxGeometry(baseW,glassH,0.03), M.glass);
+  panelA.position.set(0, glassH/2, baseD/2-0.015);
+  g.add(panelA);
+  const panelB = new THREE.Mesh(new THREE.BoxGeometry(0.03,glassH,baseD), M.glass);
+  panelB.position.set(baseW/2-0.015, glassH/2, 0);
+  g.add(panelB);
+  const trimA = new THREE.Mesh(new THREE.BoxGeometry(baseW,0.05,0.05), M.frameDark);
+  trimA.position.set(0, glassH, baseD/2-0.015);
+  g.add(trimA);
+  const trimB = new THREE.Mesh(new THREE.BoxGeometry(0.05,glassH,0.05), M.frameDark);
+  trimB.position.set(baseW/2-0.015, glassH/2, -baseD/2);
+  g.add(trimB);
+
+  const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.03,0.45,10), M.frameDark);
+  arm.rotation.z = Math.PI/2.3;
+  arm.position.set(-baseW*0.28, glassH*0.7, -baseD*0.35);
+  g.add(arm);
+  const head = new THREE.Mesh(new THREE.CylinderGeometry(0.15,0.15,0.04,20), M.frameDark);
+  head.rotation.x = Math.PI/2;
+  head.position.set(-baseW*0.12, glassH*0.72, -baseD*0.35);
+  g.add(head);
+  const valve = new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.07,0.04,16), M.frameDark);
+  valve.rotation.x = Math.PI/2;
+  valve.position.set(-baseW*0.35, glassH*0.35, -baseD*0.42);
+  g.add(valve);
+
+  g.userData.base = { w: baseW, d: baseD };
+  return g;
+}
+
+function buildMirror(w, M){
+  const g = new THREE.Group();
+  const h = 2.4, t = 0.06;
+  g.add(new THREE.Mesh(new THREE.BoxGeometry(w,h,0.03), M.mirror));
+  const top = new THREE.Mesh(new THREE.BoxGeometry(w+t*2,t,0.05), M.brass); top.position.y = h/2+t/2; g.add(top);
+  const bot = top.clone(); bot.position.y = -h/2-t/2; g.add(bot);
+  const left = new THREE.Mesh(new THREE.BoxGeometry(t,h+t*2,0.05), M.brass); left.position.x = -w/2-t/2; g.add(left);
+  const right = left.clone(); right.position.x = w/2+t/2; g.add(right);
+  return g;
+}
+
+function buildTowelBar(len, M){
+  const g = new THREE.Group();
+  const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.02,0.02,len,10), M.brass);
+  bar.rotation.z = Math.PI/2;
+  g.add(bar);
+  const b1 = new THREE.Mesh(new THREE.BoxGeometry(0.04,0.08,0.04), M.brass); b1.position.x = -len/2; g.add(b1);
+  const b2 = b1.clone(); b2.position.x = len/2; g.add(b2);
+  return g;
+}
+
+function render3D(result){
+  const container = document.getElementById('scene3d');
+  disposeThree();
+  container.innerHTML = '';
+
+  if(typeof THREE === 'undefined'){
+    container.innerHTML = '<div class="scene3d-fallback">3D view needs an internet connection to load three.js from a CDN. The 2D floor plan above still reflects the exact same layout.</div>';
+    return;
+  }
+
+  const { roomW, roomL, chosen } = result;
+  const layout = computeLayout(result);
+  const W = container.clientWidth || 620, H = 420;
+  const WALL_H = 8;
+  const M = makeMaterials();
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xEDEAE1);
+
+  const camera = new THREE.PerspectiveCamera(42, W/H, 0.1, 200);
+  camera.position.set(roomW*0.85, WALL_H*1.3, roomL*1.25);
+
+  const renderer = new THREE.WebGLRenderer({ antialias:true });
+  renderer.setSize(W, H);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
+  container.appendChild(renderer.domElement);
+
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.target.set(0, WALL_H*0.3, 0);
+  controls.maxPolarAngle = Math.PI*0.49;
+  controls.minDistance = 4;
+  controls.maxDistance = 40;
+  controls.enableDamping = true;
+  controls.update();
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.65));
+  const dir = new THREE.DirectionalLight(0xffffff, 0.55);
+  dir.position.set(roomW, WALL_H*2, roomL);
+  scene.add(dir);
+
+  const toX = (ftX) => ftX - roomW/2;
+  const toZ = (ftY) => ftY - roomL/2;
+
+  // tiled floor
+  const floorTex = makeTileTexture(Math.max(roomW,roomL)/1.5, '#D8D2C3', '#F4F1E8');
+  const floor = new THREE.Mesh(new THREE.BoxGeometry(roomW,0.05,roomL), new THREE.MeshStandardMaterial({map:floorTex, roughness:0.75}));
+  floor.position.set(0,-0.025,0);
+  scene.add(floor);
+
+  // back + left walls, with a baseboard trim
+  const wallMat = new THREE.MeshStandardMaterial({color:0xE3DECF, roughness:0.85});
+  const backWall = new THREE.Mesh(new THREE.BoxGeometry(roomW, WALL_H, 0.15), wallMat);
+  backWall.position.set(0, WALL_H/2, toZ(0)); scene.add(backWall);
+  const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.15, WALL_H, roomL), wallMat);
+  leftWall.position.set(toX(0), WALL_H/2, 0); scene.add(leftWall);
+  const baseboard1 = new THREE.Mesh(new THREE.BoxGeometry(roomW,0.35,0.05), M.brass);
+  baseboard1.position.set(0, 0.18, toZ(0)+0.08); scene.add(baseboard1);
+  const baseboard2 = new THREE.Mesh(new THREE.BoxGeometry(0.05,0.35,roomL), M.brass);
+  baseboard2.position.set(toX(0)+0.08, 0.18, 0); scene.add(baseboard2);
+
+  function placeScaled(group, r){
+    const base = group.userData.base;
+    group.scale.set(r.w/base.w, 1, r.d/base.d);
+    group.position.set(toX(r.x+r.w/2), 0, toZ(r.y+r.d/2));
+    scene.add(group);
+  }
+
+  if(layout.vanity){
+    const vanity = buildVanity(M, !!chosen.mirror);
+    placeScaled(vanity, layout.vanity);
+
+    if(chosen.mirror){
+      const r = layout.vanity;
+      const mirror = buildMirror(r.w*0.7, M);
+      mirror.position.set(toX(r.x+r.w/2), 5.1, toZ(0)+0.12);
+      scene.add(mirror);
+      const sconceGlow = new THREE.Mesh(new THREE.SphereGeometry(0.09,14,14), new THREE.MeshStandardMaterial({color:0xFFF3D0, emissive:0xFFE9A8, emissiveIntensity:0.8}));
+      sconceGlow.position.set(toX(r.x+r.w/2), 6.5, toZ(0)+0.12);
+      scene.add(sconceGlow);
+      const sconceLight = new THREE.PointLight(0xFFE9A8, 0.6, 8);
+      sconceLight.position.copy(sconceGlow.position);
+      scene.add(sconceLight);
+    }
+  }
+
+  if(layout.toilet){
+    placeScaled(buildToilet(M), layout.toilet);
+  }
+
+  if(layout.tub){
+    placeScaled(buildTub(M), layout.tub);
+  }
+
+  if(layout.shower){
+    placeScaled(buildShower(M), layout.shower);
+  }
+
+  // towel bar on whichever rendered wall sits nearest the shower/tub
+  const wetFixture = layout.shower || layout.tub;
+  if(wetFixture){
+    const bar = buildTowelBar(1.6, M);
+    bar.rotation.y = Math.PI/2;
+    bar.position.set(toX(0)+0.1, 3.2, toZ(Math.min(wetFixture.y+wetFixture.d*0.5, roomL-1)));
+    scene.add(bar);
+  }
+
+  function animate(){
+    _three.animId = requestAnimationFrame(animate);
+    controls.update();
+    renderer.render(scene, camera);
+  }
+  _three = { renderer, animId: null };
+  animate();
+}
+
+/* =========================================================
+   6. RENDER RESULTS
+   ========================================================= */
+function renderResults(result){
+  const el = document.getElementById('results');
+  if(result.error){
+    el.innerHTML = `<div class="stage"><div class="section-title"><h2>Can't fit a bundle yet</h2></div><p>${result.error}</p></div>`;
+    return;
+  }
+  const { chosen, spent, budget, spaceFit, notes, roomArea, usedArea } = result;
+  const stats = sustainabilityStats(chosen);
+  const { svg, legend } = renderFloorplan(result);
+
+  const catLabels = {toilet:'Toilet', faucet:'Faucet', vanity:'Vanity', shower:'Shower system', tub:'Bathtub', mirror:'Mirror'};
+  const order = ['vanity','toilet','faucet','shower','tub','mirror'];
+
+  el.innerHTML = `
+    <div class="stage">
+      <div class="section-title">
+        <h2>Floor plan</h2>
+        <span class="badge ${spaceFit?'ok':'warn'}">${spaceFit? 'Fits comfortably' : 'Tight fit — review'}</span>
+      </div>
+      <div class="floorplan-wrap">
+        ${svg}
+        <div class="legend">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:4px;">${usedArea.toFixed(1)} sq ft of fixtures on ${roomArea.toFixed(1)} sq ft floor</div>
+          ${legend}
+        </div>
+      </div>
+      ${notes.length ? `<p class="fine" style="margin-top:14px;">${notes.join(' ')}</p>` : ''}
+    </div>
+
+    <div class="stage">
+      <div class="section-title"><h2>3D visualization</h2></div>
+      <div class="scene3d-wrap" id="scene3d" style="height:420px;"></div>
+      <div class="scene3d-hint">Drag to rotate · scroll to zoom · same fixture placement as the floor plan above.</div>
+    </div>
+
+    <div class="stage">
+      <div class="section-title"><h2>Recommended bundle · ${result.theme}</h2></div>
+      <div class="bundle-grid">
+        ${order.filter(c=>chosen[c]).map(c => `
+          <div class="card">
+            <div class="cat">${catLabels[c]}</div>
+            <h3>${chosen[c].name}</h3>
+            <div>${chosen[c].note}</div>
+            <div class="price">${fmtMoney(chosen[c].price)}</div>
+            <div class="tags">${chosen[c].style.join(' · ')}</div>
+          </div>`).join('')}
+      </div>
+      <div class="totals">
+        <div><div class="big">${fmtMoney(spent)}</div><div class="rem">total bundle cost</div></div>
+        <div class="rem ${spent>budget?'over':''}">${fmtMoney(Math.max(budget-spent,0))} ${spent>budget?'over budget':'remaining of budget'}</div>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="section-title"><h2>Water &amp; sustainability impact</h2></div>
+      <div class="stats-grid">
+        <div class="stat"><div class="num">${Math.round(stats.savedPct)}%</div><div class="lbl">lower water use vs. pre-efficiency baseline fixtures</div></div>
+        <div class="stat"><div class="num">${Math.round(stats.savedGallons).toLocaleString('en-US')}</div><div class="lbl">gallons saved per year, 2-occupant household</div></div>
+        <div class="stat"><div class="num">${Object.values(chosen).filter(i=>i.premium).length}</div><div class="lbl">premium / smart fixtures in this bundle</div></div>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="section-title"><h2>Design rationale</h2></div>
+      <div id="rationaleBox" class="rationale-box">Click "Explain this bundle" to generate a written rationale.</div>
+      <div class="rationale-actions">
+        <button class="secondary" id="rationaleBtn">Explain this bundle</button>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('rationaleBtn').addEventListener('click', ()=> generateRationale(result, stats));
+  render3D(result);
+}
+
+/* =========================================================
+   7. AI RATIONALE (Anthropic API, client-side, with fallback)
+   ========================================================= */
+async function generateRationale(result, stats){
+  const box = document.getElementById('rationaleBox');
+  box.innerHTML = 'Thinking<span class="loading-dot"></span>';
+
+  const bundleSummary = Object.entries(result.chosen).map(([cat,it])=>`${cat}: ${it.name} ($${it.price})`).join('\n');
+  const prompt = `You are a senior bathroom designer at KOHLER. A customer chose the "${result.theme}" theme, a room of ${result.roomW}x${result.roomL} ft, and a budget of $${result.budget}.
+The optimizer selected this bundle:
+${bundleSummary}
+Total spent: $${result.spent}. Space used: ${result.usedArea.toFixed(1)} of ${result.usableArea.toFixed(1)} sq ft usable.
+Water savings vs baseline fixtures: ${Math.round(stats.savedPct)}%, about ${Math.round(stats.savedGallons)} gallons/year.
+Write a warm, concrete, 120-160 word design rationale for the customer: why these pieces work together for their style and space, one practical tip about the layout, and one sentence on the water savings. Plain prose, no headers, no bullet points.`;
+
+  try{
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:400, messages:[{role:'user', content: prompt}] })
+    });
+    const data = await resp.json();
+    const text = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n');
+    box.textContent = text || fallbackRationale(result, stats);
+  }catch(err){
+    box.textContent = fallbackRationale(result, stats);
+  }
+}
+
+function fallbackRationale(result, stats){
+  const names = Object.values(result.chosen).map(i=>i.name);
+  return `This bundle leans into ${result.theme} by pairing ${names.slice(0,2).join(' and ')} with matching finishes and proportions sized for your ${result.roomW}×${result.roomL} ft room. `+
+  `Together the selected fixtures use ${result.usedArea.toFixed(1)} of the ${result.usableArea.toFixed(1)} sq ft you have to work with, leaving room to move around the vanity and shower comfortably. `+
+  `Placing the vanity along the entry wall and the shower opposite keeps plumbing runs short and the layout open. `+
+  `Compared with standard-efficiency fixtures, this combination is estimated to cut water use by about ${Math.round(stats.savedPct)}%, saving roughly ${Math.round(stats.savedGallons).toLocaleString('en-US')} gallons a year for a two-person household.`;
+}
+
+/* =========================================================
+   8. WIRE UP
+   ========================================================= */
+document.getElementById('generateBtn').addEventListener('click', ()=>{
+  const result = buildBundle();
+  renderResults(result);
+  document.getElementById('results').scrollIntoView({behavior:'smooth', block:'start'});
+});
+</script>
+</body>
+</html>
