@@ -1,4 +1,4 @@
-# KOHLER Studio — AI Bathroom Designer & Planner
+AI Bathroom Designer & Planner
 
 A working prototype for **Track 1: KOHLER AI Bathroom Designer & Planner**.
 
